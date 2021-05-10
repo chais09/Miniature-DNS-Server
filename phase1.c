@@ -1,7 +1,7 @@
 #define _POSIX_C_SOURCE 200112L
 #define HEADER_SIZE 12
 
-
+#include <time.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,18 +20,24 @@ int main(int argc, char* argv[]) {
     int buffer_temp = 0;
     int ans_name[2], TTL[4];
     int atype = 0, aclass = 0, rdlength = 0;
-    char ipv6[256];
+    char ipv6_s[256];
+    struct tm *info;
+    time_t raw_time;
+    char time_buffer[256];
 
-    
+    // time(&raw_time);
+    FILE *fp;
+    fp  = fopen ("dns_svr.log", "w");
     
     int size;
     // Read message from server
     memset(buffer, 0, 256);
+    memset(time_buffer, 0, 256);
     memset(header_id,0,2);
     memset(ans_name,0,2);
     memset(TTL,0,4);
     memset(domain_name,0,256);
-    memset(ipv6,0,256);
+    memset(ipv6_s,0,256);
     // while(1){
         n = read(0, buffer, 2);
         if (n < 0) {
@@ -44,6 +50,9 @@ int main(int argc, char* argv[]) {
         printf("size = %d\n",size);
 
         n = read(0, buffer, size);
+
+
+
         // header read start here
         for (int count = 0; count < HEADER_SIZE; count++){
             n = read(0, buffer, 1);
@@ -56,8 +65,7 @@ int main(int argc, char* argv[]) {
             else if (count == 2){
                 qr = (buffer[count]>>7 & 1);
                 aa = (buffer[count]>>3 & 1);
-                // int qr, aa, ra, z, ad, cd;
-                // printf("qr = %d\n",qr);
+
             }
             else if (count == 3){
                 ra = (buffer[count]>>7 & 1);
@@ -107,6 +115,9 @@ int main(int argc, char* argv[]) {
         printf("id: %x %x, QR= %d, aa= %d, ra= %d, z= %d, ad= %d, cd= %d, qcount= %d, ancount= %d, nscount= %d, arcount =%d\n",
         header_id[0], header_id[1], qr, aa, ra,z,ad,cd,qdcount,ancount,nscount,arcount);
 
+
+        
+
         buffer_temp = HEADER_SIZE;
         // printf("buffer[buffer_temp] = %d\n",buffer[buffer_temp]);
 
@@ -137,6 +148,7 @@ int main(int argc, char* argv[]) {
             // domain_name_size++;
             label_size-- ;
         }
+        
         buffer_temp++;
         printf("domain_name_size = %d\n",domain_name_size);
         printf("domain_name: %s\n",domain_name);
@@ -144,7 +156,21 @@ int main(int argc, char* argv[]) {
         qtype = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp++];
         qclass = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp++];
         printf("qtype = %d, qclass = %d\n",qtype,qclass);
-        
+        if (ancount == 0){
+            memset(time_buffer,0,256);
+            time(&raw_time);
+            info = localtime( &raw_time );
+            strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
+            // printf("time_buffer = %s\n",time_buffer);
+            fprintf(fp, "%s requested %s\n",time_buffer, domain_name);
+        }
+        if (qtype != 28){
+            memset(time_buffer,0,256);
+            info = localtime( &raw_time );
+            strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
+            // printf("time_buffer = %s\n",time_buffer);
+            fprintf(fp, "%s unimplemented request\n",time_buffer);
+        }
 
         // answer read start here
         if (ancount > 0){
@@ -160,11 +186,6 @@ int main(int argc, char* argv[]) {
 
             int rdata[rdlength];
             memset(rdata, 0, rdlength);
-            // char temp[256];
-            // int temp_int = (((int)buffer[buffer_temp])*16*16) + (int)buffer[buffer_temp+1];
-            // sprintf(temp, "%x", temp_int);
-            // printf("temp = %s\n",temp);
-            // printf("temp_int = %d\n",temp_int);
             int zero_time = 0;
             // make the ipv6 string and also save in rdata
             for (int i = 0; i< rdlength; i++){
@@ -177,18 +198,18 @@ int main(int argc, char* argv[]) {
                         iszero = 1;
                         if (zero_time == 0){
                             char *a = ":";
-                            strcat(ipv6,a);
+                            strcat(ipv6_s,a);
                             zero_time++;
                         }
                     }
                     else{
                         sprintf(temp, "%x", temp_int);
-                        strcat(ipv6,temp);
+                        strcat(ipv6_s,temp);
                     }
                     if (i != (rdlength -2)){
                         if (!iszero){
                             char *a = ":";
-                            strcat(ipv6,a);
+                            strcat(ipv6_s,a);
                         }
                     }
                 }
@@ -203,18 +224,18 @@ int main(int argc, char* argv[]) {
             //     printf("RDATA[%d] = %x\n", rdlength,rdata[i]);
             // }
 
-            printf("ipv6 = %s\n", ipv6);
+            printf("ipv6_s = %s\n", ipv6_s);
             
-
+            if (atype == 28){
+                memset(time_buffer,0,256);
+                time(&raw_time);
+                info = localtime( &raw_time );
+                strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
+                // printf("time_buffer = %s\n",time_buffer);
+                fprintf(fp, "%s %s is at %s\n",time_buffer, domain_name,ipv6_s);
+            }
         }
-       
 
-
-
-
-
-        
-        // }
 
 
 
