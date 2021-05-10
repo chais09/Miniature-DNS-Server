@@ -153,10 +153,12 @@ int main(int argc, char* argv[]) {
         printf("domain_name_size = %d\n",domain_name_size);
         printf("domain_name: %s\n",domain_name);
         // printf("buffer[buffer_temp] = %d\n",buffer[buffer_temp]);
-        qtype = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp++];
-        qclass = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp++];
+        qtype = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp+1];
+        buffer_temp++;
+        qclass = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp+1];
+        buffer_temp++;
         printf("qtype = %d, qclass = %d\n",qtype,qclass);
-        if (ancount == 0){
+        if (qr == 0){
             memset(time_buffer,0,256);
             time(&raw_time);
             info = localtime( &raw_time );
@@ -176,13 +178,17 @@ int main(int argc, char* argv[]) {
         if (ancount > 0){
             ans_name[0] = buffer[buffer_temp++];
             ans_name[1] = buffer[buffer_temp++];
-            atype = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp++];
-            aclass = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp++];
+            atype = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp+1];
+            buffer_temp++;
+            aclass = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp+1];
+            buffer_temp++;
             TTL[0] = buffer[buffer_temp++];
             TTL[1] = buffer[buffer_temp++];
             TTL[2] = buffer[buffer_temp++];
             TTL[3] = buffer[buffer_temp++];
-            rdlength = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp++];
+            rdlength = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp+1];
+            buffer_temp++;
+
 
             int rdata[rdlength];
             memset(rdata, 0, rdlength);
@@ -226,13 +232,21 @@ int main(int argc, char* argv[]) {
 
             printf("ipv6_s = %s\n", ipv6_s);
             
-            if (atype == 28){
+            if (atype == 28 && qr==1){
                 memset(time_buffer,0,256);
                 time(&raw_time);
                 info = localtime( &raw_time );
                 strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
                 // printf("time_buffer = %s\n",time_buffer);
                 fprintf(fp, "%s %s is at %s\n",time_buffer, domain_name,ipv6_s);
+            }
+            else if(atype != 28){
+                memset(time_buffer,0,256);
+                time(&raw_time);
+                info = localtime( &raw_time );
+                strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
+                // printf("time_buffer = %s\n",time_buffer);
+                fprintf(fp, "%s unimplemented request\n",time_buffer);
             }
         }
 
