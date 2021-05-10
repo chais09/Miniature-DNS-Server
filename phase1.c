@@ -31,6 +31,7 @@ int main(int argc, char* argv[]) {
     memset(ans_name,0,2);
     memset(TTL,0,4);
     memset(domain_name,0,256);
+    memset(ipv6,0,256);
     // while(1){
         n = read(0, buffer, 2);
         if (n < 0) {
@@ -159,17 +160,51 @@ int main(int argc, char* argv[]) {
 
             int rdata[rdlength];
             memset(rdata, 0, rdlength);
-
+            // char temp[256];
+            // int temp_int = (((int)buffer[buffer_temp])*16*16) + (int)buffer[buffer_temp+1];
+            // sprintf(temp, "%x", temp_int);
+            // printf("temp = %s\n",temp);
+            // printf("temp_int = %d\n",temp_int);
+            int zero_time = 0;
+            // make the ipv6 string and also save in rdata
             for (int i = 0; i< rdlength; i++){
-                rdata[i] = buffer[buffer_temp++];
+                char temp[256];
+                memset(temp,0,256);
+                int iszero = 0;
+                if (i%2 == 0){
+                    int temp_int = (((int)buffer[buffer_temp])*16*16) + (int)buffer[buffer_temp+1];
+                    if (temp_int == 0){
+                        iszero = 1;
+                        if (zero_time == 0){
+                            char *a = ":";
+                            strcat(ipv6,a);
+                            zero_time++;
+                        }
+                    }
+                    else{
+                        sprintf(temp, "%x", temp_int);
+                        strcat(ipv6,temp);
+                    }
+                    if (i != (rdlength -2)){
+                        if (!iszero){
+                            char *a = ":";
+                            strcat(ipv6,a);
+                        }
+                    }
+                }
+                rdata[i] = buffer[buffer_temp];
+                buffer_temp++;
             }
 
             printf("ans_name = %x %x\n", ans_name[0],ans_name[1]);
             printf("atype = %d, aclass = %d\n",atype,aclass);
             printf("TTL = %x %x %x %x\n", TTL[0],TTL[1],TTL[2],TTL[3]);
-            for (int i = 0; i< rdlength; i++){
-                printf("RDATA[%d] = %x\n", rdlength,rdata[i]);
-            }
+            // for (int i = 0; i< rdlength; i++){
+            //     printf("RDATA[%d] = %x\n", rdlength,rdata[i]);
+            // }
+
+            printf("ipv6 = %s\n", ipv6);
+            
 
         }
        
