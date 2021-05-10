@@ -152,11 +152,13 @@ int main(int argc, char* argv[]) {
         buffer_temp++;
         printf("domain_name_size = %d\n",domain_name_size);
         printf("domain_name: %s\n",domain_name);
-        // printf("buffer[buffer_temp] = %d\n",buffer[buffer_temp]);
-        qtype = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp+1];
-        buffer_temp++;
-        qclass = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp+1];
-        buffer_temp++;
+        // printf("buffer[buffer_temp-1] = %x\n",buffer[buffer_temp-1]);
+        // printf("buffer[buffer_temp] = %x\n",buffer[buffer_temp]);
+        // printf("buffer[buffer_temp+1] = %x\n",buffer[buffer_temp+1]);
+        qtype = (((int)buffer[buffer_temp])*16*16) + (int)buffer[buffer_temp+1];
+        buffer_temp+=2;
+        qclass = (((int)buffer[buffer_temp])*16*16) + (int)buffer[buffer_temp+1];
+        buffer_temp+=2;
         printf("qtype = %d, qclass = %d\n",qtype,qclass);
         if (qr == 0){
             memset(time_buffer,0,256);
@@ -178,16 +180,16 @@ int main(int argc, char* argv[]) {
         if (ancount > 0){
             ans_name[0] = buffer[buffer_temp++];
             ans_name[1] = buffer[buffer_temp++];
-            atype = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp+1];
-            buffer_temp++;
-            aclass = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp+1];
-            buffer_temp++;
+            atype = (((int)buffer[buffer_temp])*16*16) + (int)buffer[buffer_temp+1];
+            buffer_temp+=2;
+            aclass = (((int)buffer[buffer_temp])*16*16) + (int)buffer[buffer_temp+1];
+            buffer_temp+=2;
             TTL[0] = buffer[buffer_temp++];
             TTL[1] = buffer[buffer_temp++];
             TTL[2] = buffer[buffer_temp++];
             TTL[3] = buffer[buffer_temp++];
-            rdlength = (((int)buffer[buffer_temp++])*16*16) + (int)buffer[buffer_temp+1];
-            buffer_temp++;
+            rdlength = (((int)buffer[buffer_temp])*16*16) + (int)buffer[buffer_temp+1];
+            buffer_temp+=2;
 
 
             int rdata[rdlength];
