@@ -3,11 +3,11 @@
 # OBJ - compiled source files that should be linked
 # COPT - compiler flags
 # BIN - binary
-CC=clang
+CC=gcc
 OBJ=helper1.o
 COPT=-Wall -Wpedantic -g
 BIN_PHASE1=phase1
-BIN_PHASE2=dns_query
+BIN_PHASE2=dns_svr
 
 # Running "make" with no argument will make the first target in the file
 all: $(BIN_PHASE1) $(BIN_PHASE2)
@@ -33,3 +33,5 @@ format:
 
 clean:
 	# implement this, to remove $(BIN_PHASE[12]) and any .o files
+	rm -f $(BIN_PHASE2)
+	rm -f *.o
