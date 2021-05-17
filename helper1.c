@@ -159,8 +159,10 @@ int read_input(unsigned char* buffer, int size){
         strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
         // printf("time_buffer = %s\n",time_buffer);
         fprintf(fp, "%s unimplemented request\n",time_buffer);
+        int code;
+        code = ((int)buffer[3]) + 4;
         fflush(fp);
-        return 0;
+        return code;
     }
 
     printf("read_input: before read answer\n");

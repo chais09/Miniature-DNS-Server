@@ -159,19 +159,8 @@ int main(int argc, char* argv[]) {
 			perror("ERROR reading from socket in the read length");
 			exit(EXIT_FAILURE);
 		}
-		int isValid = 1;
-		printf("before read input client\n");
-		isValid = read_input(buffer_temp, size);
-		if(isValid == 0){
-			printf("not valid req\n");
-			unsigned char notValidBuffer[14+size];
-		}
-		printf("after read input client\n");
-
-
-
-
-
+		
+		// connect length and buffer_temp array to become a single buffer array
 		for (int i=0; i< 2; i++){
 			buffer[i] = length[i];
 		}
@@ -191,6 +180,23 @@ int main(int argc, char* argv[]) {
 		}
 		printf("\n");
 		
+		int n3,isValid = 1;
+		printf("before read input client\n");
+		isValid = read_input(buffer_temp, size);
+		if(isValid != 1){
+			printf("not valid req\n");
+			printf("buffer[5] before = %x\n",buffer[5]);
+			buffer[5] = (int) isValid;
+			printf("buffer[5] after = %x\n",buffer[5]);
+			n3 = write(newsockfd, buffer , size+2);
+			if(n3 < 0){
+				printf("error: write to client when rcode = 4");
+				perror("ERROR write to client rcode = 4");
+				exit(EXIT_FAILURE);
+			}
+			continue;
+		}
+		printf("after read input client\n");
 
 
 
