@@ -188,7 +188,7 @@ int main(int argc, char* argv[]) {
 			printf("buffer[5] before = %x\n",buffer[5]);
 			printf("buffer[4] before = %x\n",buffer[4]);
 			buffer[5] = (int) isValid;
-			buffer[4] = (int)buffer[4] + 128;
+			buffer[4] = (int)buffer[4] + 127;
 			printf("buffer[5] after = %x\n",buffer[5]);
 			printf("buffer[4] after = %x\n",buffer[4]);
 			n3 = write(newsockfd, buffer , size+2);
