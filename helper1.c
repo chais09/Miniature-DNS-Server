@@ -193,9 +193,16 @@ int read_input(unsigned char* buffer, int size){
                 if (temp_int == 0){
                     iszero = 1;
                     if (zero_time == 0){
-                        char *a = ":";
-                        strcat(ipv6_s,a);
-                        zero_time++;
+                        if (i != 0){
+                            char *a = ":";
+                            strcat(ipv6_s,a);
+                            zero_time++;
+                        }
+                        else if(i == 0){
+                            char *a = "::";
+                            strcat(ipv6_s,a);
+                            zero_time++;
+                        }
                     }
                 }
                 else{
@@ -232,15 +239,15 @@ int read_input(unsigned char* buffer, int size){
             fprintf(fp, "%s %s is at %s\n",time_buffer, domain_name,ipv6_s);
             fflush(fp);
         }
-        else if(atype != 28){
-            memset(time_buffer,0,256);
-            time(&raw_time);
-            info = localtime( &raw_time );
-            strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
-            // printf("time_buffer = %s\n",time_buffer);
-            fprintf(fp, "%s unimplemented request\n",time_buffer);
-            fflush(fp);
-        }
+        // else if(atype != 28){
+        //     memset(time_buffer,0,256);
+        //     time(&raw_time);
+        //     info = localtime( &raw_time );
+        //     strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
+        //     // printf("time_buffer = %s\n",time_buffer);
+        //     fprintf(fp, "%s unimplemented request\n",time_buffer);
+        //     fflush(fp);
+        // }
     }
 
     // unsigned char pass_up_stream[size+2];
