@@ -160,6 +160,7 @@ int read_input(unsigned char* buffer, int size){
         // printf("time_buffer = %s\n",time_buffer);
         fprintf(fp, "%s unimplemented request\n",time_buffer);
         fflush(fp);
+        return 0;
     }
 
     printf("read_input: before read answer\n");
