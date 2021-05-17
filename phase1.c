@@ -13,7 +13,7 @@
 int main(int argc, char* argv[]) {
     int n, domain_name_size = 0;
     int header_id[2], rcode[4];
-	unsigned char buffer[256];
+    unsigned char length[2];
     int qr = 0, aa = 0, ra = 0, z = 0, ad = 0, cd = 0, qdcount = 0, ancount = 0, nscount = 0, arcount = 0;
     char domain_name[256];
     int qtype = 0, qclass = 0;
@@ -31,7 +31,8 @@ int main(int argc, char* argv[]) {
     
     int size;
     // Read message from server
-    memset(buffer, 0, 256);
+    memset(length,0,2);
+    
     memset(time_buffer, 0, 256);
     memset(header_id,0,2);
     memset(ans_name,0,2);
@@ -39,15 +40,21 @@ int main(int argc, char* argv[]) {
     memset(domain_name,0,256);
     memset(ipv6_s,0,256);
     // while(1){
-        n = read(0, buffer, 2);
+        n = read(0, length, 2);
         if (n < 0) {
             // break;
             perror("read");
             exit(EXIT_FAILURE);
         }
        
-        size = (((int)buffer[0])*16*16) + (int)buffer[1];
+        size = (((int)length[0])*16*16) + (int)length[1];
         printf("size = %d\n",size);
+
+
+
+
+        unsigned char buffer[size];
+        memset(buffer, 0, 256);
 
         n = read(0, buffer, size);
 
@@ -251,6 +258,21 @@ int main(int argc, char* argv[]) {
                 fprintf(fp, "%s unimplemented request\n",time_buffer);
             }
         }
+
+        unsigned char pass_up_stream[size+2];
+        for (int i = 0; i< 2; i++){
+            pass_up_stream[i] = length[i];
+        }
+        for (int i = 0;i < size; i++){
+            pass_up_stream[i+2] = buffer[i];
+        }   
+
+        // for (int i = 0; i< size+2; i++){
+        //     if(i%16 == 0){
+        //         printf("\n");
+        //     }
+        //     printf("%x  ", pass_up_stream[i]);
+        // }
 
 
 

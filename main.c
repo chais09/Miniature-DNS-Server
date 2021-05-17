@@ -1,8 +1,12 @@
+#include "helper1.h"
+
+#include <time.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 
 
 #define PORT "8053"
@@ -11,10 +15,20 @@
 int main(int argc, char* argv[]) {
     
     int sockfd, newsockfd, n, re, i;
-	unsigned char buffer[256];
+	unsigned char length[2];
 	struct addrinfo hints, *res;
 	struct sockaddr_storage client_addr;
 	socklen_t client_addr_size;
+
+	// struct tm *info;
+    // time_t raw_time;
+    char time_buffer[256];
+
+	// open file for write
+	FILE *fp;
+    fp  = fopen ("dns_svr.log", "w");
+	// fprintf(fp, "first test\n");
+	fflush(fp);
 
     printf("test: first\n");
     // Create address we're going to listen on (with given port number)
@@ -66,24 +80,63 @@ int main(int argc, char* argv[]) {
 		perror("accept");
 		exit(EXIT_FAILURE);
 	}
-    memset(buffer, 0, 256);
+    memset(length, 0, 256);
     printf("test: before read\n");
-    n = read(newsockfd, buffer, 255); // n is number of characters read
+
+
+
+	// here the input come
+	// read the size of the input
+	int size = 0;
+	n = read(newsockfd, length, 2);
+	size = (((int)length[0])*16*16) + (int)length[1];
+    printf("size = %d\n",size);
+
+	unsigned char buffer_temp[size];
+	memset(buffer_temp,0,size);
+	
+	unsigned char buffer[size + 2];
+	memset(buffer,0,size+2); 
+	
+	// unsigned char buffer[256];
+	// memset(buffer,0,256);
+    n = read(newsockfd, buffer_temp, size); // n is number of characters read
+	if (n < 0) {
+        perror("ERROR reading from socket in the read length");
+        exit(EXIT_FAILURE);
+    }
+
+	printf("before read input client\n");
+	read_input(buffer_temp, size);
+	printf("after read input client\n");
+
+
+
+
+
+	for (int i=0; i< 2; i++){
+		buffer[i] = length[i];
+	}
+	for (int i = 0; i< size; i++){
+		buffer[i+2] = buffer_temp[i];
+	}
     if (n < 0) {
         perror("ERROR reading from socket");
         exit(EXIT_FAILURE);
     }
     printf("buffer from client: \n");
-    for (int i = 0; i< n; i++){
+    for (int i = 0; i< size+2; i++){
         if(i % 16 == 0){
             printf("\n");
         }
         printf("%x  ", buffer[i]);
     }
     printf("\n");
-    // for (int i=0; i< n; i++){
-    //     printf("buffer[%d] = %x\n", i, buffer[i]);
-    // }  
+    
+
+
+
+
 
 
     //connect upStream
@@ -91,7 +144,8 @@ int main(int argc, char* argv[]) {
     printf("test: first up \n");
     int sockfd2, n2;
 	struct addrinfo hints2, *servinfo2, *rp2;
-	unsigned char buffer2[256];
+	unsigned char length2[2];
+	// unsigned char buffer2[256];
 
 	if (argc < 3) {
 		fprintf(stderr, "usage %s hostname port\n", argv[0]);
@@ -133,23 +187,56 @@ int main(int argc, char* argv[]) {
 	}
 
     printf("test: before write to upstream \n");
-    n2 = write(sockfd2, buffer, n);
+    n2 = write(sockfd2, buffer, size+2);
     if (n2 < 0) {
         perror("socket2");
         exit(EXIT_FAILURE);
     }
 
     // Read message from server
-    memset(buffer2, 0, 256);
+	memset(length2, 0,2);
+	n2 = read(sockfd2, length2, 2);
+	if (n2 < 0) {
+		printf("error in read lenght 2\n");
+        perror("read length 2");
+        exit(EXIT_FAILURE);
+    }
+
+	// the size of the message(excluding 2 bytes length)
+	int size2 = 0;
+	size2 = (((int)length2[0])*16*16) + (int)length2[1];
+	printf("size2 from server = %d\n",size2);
+
+	unsigned char buffer2[size2 + 2];
+	unsigned char buffer2_temp[size2];
+
+
+    memset(buffer2, 0, size2 + 2);
+	memset(buffer2_temp, 0, size2);
+
     printf("test: before reading from upstream \n");
-    n2 = read(sockfd2, buffer2, 255);
+    n2 = read(sockfd2, buffer2_temp, size2);
     if (n2 < 0) {
         perror("read2");
         exit(EXIT_FAILURE);
     }
 
+	printf("before read input upstream\n");
+	read_input(buffer2_temp, size2);
+	printf("after read input upstream\n");
+
+
+	// combined length array and buffer_temp2 array into a single array
+	// and send back to our client
+	for (int i = 0; i< 2; i++){
+		buffer2[i] = length2[i];
+	}
+	for (int i = 0; i< size2; i++){
+		buffer2[i+2] = buffer2_temp[i];
+	}
+
     printf("Buffer2 from up stream: \n");
-    for (int i = 0; i<n2; i++){
+    for (int i = 0; i< size2+2; i++){
         if(i % 16 == 0){
             printf("\n");
         }
@@ -162,6 +249,8 @@ int main(int argc, char* argv[]) {
     close(sockfd2);
 	freeaddrinfo(servinfo2);
 
+    // write back to the client
+    n2 = write(newsockfd, buffer2,size2+2);
 
 
 
