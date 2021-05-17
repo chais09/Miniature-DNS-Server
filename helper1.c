@@ -11,15 +11,13 @@ int read_input(unsigned char* buffer, int size){
     printf("read_input very first\n");
     FILE *fp;
     fp  = fopen ("dns_svr.log", "a");
-    int n, domain_name_size = 0;
-    int header_id[2], rcode[4];
-    int qr = 0, aa = 0, ra = 0, z = 0, ad = 0, cd = 0, qdcount = 0, ancount = 0, nscount = 0, arcount = 0;
-    char domain_name[256];
-    int qtype = 0, qclass = 0;
-    int buffer_temp = 0;
-    int ans_name[2], TTL[4];
-    int atype = 0, aclass = 0, rdlength = 0;
-    char ipv6_s[256];
+    char domain_name[256], ipv6_s[256];
+    int domain_name_size = 0;
+    int qr = 0, aa = 0, ra = 0, z = 0, ad = 0, cd = 0, qdcount = 0;
+    int qtype = 0, qclass = 0, atype = 0, aclass = 0, rdlength = 0;
+    int buffer_temp = 0, ancount = 0, nscount = 0, arcount = 0;
+    int ans_name[2], TTL[4], header_id[2], rcode[4];
+
 
     struct tm *info;
     time_t raw_time;
@@ -35,9 +33,9 @@ int read_input(unsigned char* buffer, int size){
     // }
     // printf("\n");
     memset(time_buffer, 0, 256);
-    memset(header_id,0,2);
-    memset(ans_name,0,2);
-    memset(TTL,0,4);
+    memset(header_id,0,2*sizeof(int));
+    memset(ans_name,0,2*sizeof(int));
+    memset(TTL,0,4*sizeof(int));
     memset(domain_name,0,256);
     memset(ipv6_s,0,256);
     // while(1){
@@ -146,14 +144,14 @@ int read_input(unsigned char* buffer, int size){
     if (qr == 0){
         printf("qr == 0\n");
         memset(time_buffer,0,256);
-        time(&raw_time);
+        time(&raw_time); 
         info = localtime( &raw_time );
         strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
         printf("time_buffer = %s\n",time_buffer);
         fprintf(fp, "%s requested %s\n",time_buffer, domain_name);
         fflush(fp);
     }
-    if (qtype != 28){
+    if (qtype != 28 || rcode[0] != 0 || rcode[1] != 0 || rcode[2] != 0 || rcode[3] != 0){
         memset(time_buffer,0,256);
         info = localtime( &raw_time );
         strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);

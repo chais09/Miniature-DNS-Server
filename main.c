@@ -14,15 +14,11 @@
 
 int main(int argc, char* argv[]) {
     
-    int sockfd, newsockfd, n, re, i;
+    int sockfd, newsockfd, n;
 	unsigned char length[2];
 	struct addrinfo hints, *res;
 	struct sockaddr_storage client_addr;
 	socklen_t client_addr_size;
-
-	// struct tm *info;
-    // time_t raw_time;
-    char time_buffer[256];
 
 	// open file for write
 	FILE *fp;
@@ -183,7 +179,7 @@ int main(int argc, char* argv[]) {
 		int n3,isValid = 1;
 		printf("before read input client\n");
 		isValid = read_input(buffer_temp, size);
-		if(isValid != 1){
+		if(isValid != 1){ 
 			printf("not valid req\n");
 			printf("buffer[5] before = %x\n",buffer[5]);
 			printf("buffer[4] before = %x\n",buffer[4]);
@@ -233,7 +229,6 @@ int main(int argc, char* argv[]) {
 			perror("getaddrinfo2");
 			exit(EXIT_FAILURE);
 		}
-		printf("sizeof(unsinged char) = %d\n", sizeof(unsigned char));
 		printf("test: before sockfd up\n");
 		// Connect to first valid result
 		// Why are there multiple results? see man page (search 'several reasons')
@@ -260,28 +255,7 @@ int main(int argc, char* argv[]) {
 			exit(EXIT_FAILURE);
 		}
 
-		// Read message from server
 
-		// int read_length_bytes = 0;
-		// unsigned char temp_length_read[2];
-		// memset(length, 0, 256);
-		// memset(temp_length_read,0,2);
-		// int size = 0;
-		// n = read(newsockfd, temp_length_read, 2);
-		//  // n is number of characters read
-		// if(n == 2){
-		// 	for(int i = 0; i < 2; i++){
-		// 		length[i] = temp_length_read[i];
-		// 	}
-		// }
-		// while (n + read_length_bytes < 2){
-		// 	for (int i = 0; i< n; i++){
-		// 		length[read_length_bytes] = temp_length_read[i];
-		// 		read_length_bytes++;
-		// 	}
-		// 	memset(temp_length_read,0,2);
-		// 	n = read(newsockfd, temp_length_read, 2);
-		// }
 		int read_length_bytes2 = 0;
 		unsigned char temp_length_read2[2];
 		memset(temp_length_read2,0,2);
@@ -324,28 +298,7 @@ int main(int argc, char* argv[]) {
 
 		printf("test: before reading from upstream \n");
 
-		// int read_bytes = 0;
-		// unsigned char temp_read[size];
-
-		// memset(temp_read,0,size);
-		// n = read(newsockfd, temp_read, size); // n is number of characters read
-
-		// if(n == size){
-		// 	for(int i = 0; i < size; i++){
-		// 		buffer_temp[i] = temp_read[i];
-		// 	}
-		// }
-		// while (n + read_bytes < size){
-		// 	for (int i = 0; i< n; i++){
-		// 		buffer_temp[read_bytes] = temp_read[i];
-		// 		read_bytes++;
-		// 	}
-		// 	memset(temp_read,0,size);
-		// 	if (read_bytes >= size){
-		// 		break;
-		// 	}
-		// 	n = read(newsockfd, temp_read, size);
-		// }
+		
 		int read_bytes2 = 0;
 		unsigned char temp_read2[size2];
 
