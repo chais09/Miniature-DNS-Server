@@ -69,13 +69,16 @@ int main(int argc, char* argv[]) {
 		perror("listen");
 		exit(EXIT_FAILURE);
 	}
-
-    printf("test: before accept\n");
+	while(1){
+    // printf("test: before accept\n");
 	// Accept a connection - blocks until a connection is ready to be accepted
 	// Get back a new file descriptor to communicate on
 	client_addr_size = sizeof client_addr;
 	newsockfd =
 		accept(sockfd, (struct sockaddr*)&client_addr, &client_addr_size);
+	if (newsockfd == 0){
+		continue;
+	}
 	if (newsockfd < 0) {
 		perror("accept");
 		exit(EXIT_FAILURE);
@@ -84,17 +87,19 @@ int main(int argc, char* argv[]) {
     printf("test: before read\n");
 
 
-	while(1){
-		printf("while 1");
+	// while(1){
 		// here the input come
 		// read the size of the input
 		memset(length, 0, 256);
-    	printf("test: before read\n");
 		int size = 0;
 		n = read(newsockfd, length, 2);
-		if (n == 0) {
-			continue;
-		}
+		
+		// if (n == 0) {
+		// 	continue;
+		// }
+		// else if(n < 0) {
+		// 	break;
+		// }
 		size = (((int)length[0])*16*16) + (int)length[1];
 		printf("size = %d\n",size);
 
