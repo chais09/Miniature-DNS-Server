@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
 		int size = 0;
 		n = read(newsockfd, length, 2);
 		if (n == 0) {
-			break;
+			continue;
 		}
 		size = (((int)length[0])*16*16) + (int)length[1];
 		printf("size = %d\n",size);
