@@ -5,3 +5,5 @@ phase1.exe
 vgcore.*
 *.o
 test.c
+dns_svr
+dns_svr.exe

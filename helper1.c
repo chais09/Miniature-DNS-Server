@@ -16,7 +16,8 @@ int read_input(unsigned char* buffer, int size){
     int qr = 0, aa = 0, ra = 0, z = 0, ad = 0, cd = 0, qdcount = 0;
     int qtype = 0, qclass = 0, atype = 0, aclass = 0, rdlength = 0;
     int buffer_temp = 0, ancount = 0, nscount = 0, arcount = 0;
-    int ans_name[2], TTL[4], header_id[2], rcode[4];
+    int ans_name[2], TTL[4], header_id[2];
+    // int rcode[4];
 
 
     struct tm *info;
@@ -59,10 +60,10 @@ int read_input(unsigned char* buffer, int size){
             z = (buffer[count]>>6 & 1);
             ad = (buffer[count]>>5 & 1);
             cd = (buffer[count]>>4 & 1);
-            rcode[0] = (buffer[count]>>3 & 1);
-            rcode[1] = (buffer[count]>>2 & 1);
-            rcode[2] = (buffer[count]>>1 & 1);
-            rcode[3] = (buffer[count]>>0 & 1);
+            // rcode[0] = (buffer[count]>>3 & 1);
+            // rcode[1] = (buffer[count]>>2 & 1);
+            // rcode[2] = (buffer[count]>>1 & 1);
+            // rcode[3] = (buffer[count]>>0 & 1);
         }
         else if (count == 4){
             qdcount += ((int)buffer[count])*16*16;
@@ -151,7 +152,7 @@ int read_input(unsigned char* buffer, int size){
         fprintf(fp, "%s requested %s\n",time_buffer, domain_name);
         fflush(fp);
     }
-    if (qtype != 28 || rcode[0] != 0 || rcode[1] != 0 || rcode[2] != 0 || rcode[3] != 0){
+    if (qtype != 28){
         memset(time_buffer,0,256);
         info = localtime( &raw_time );
         strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
