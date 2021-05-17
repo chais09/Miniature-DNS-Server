@@ -8,12 +8,10 @@
 #include <unistd.h>
 
 
-
 #define PORT "8053"
 
 
 int main(int argc, char* argv[]) {
-    
     int sockfd, newsockfd, n;
 	unsigned char length[2];
 	struct addrinfo hints, *res;
@@ -23,16 +21,20 @@ int main(int argc, char* argv[]) {
 	// open file for write
 	FILE *fp;
     fp  = fopen ("dns_svr.log", "w");
-	// fprintf(fp, "first test\n");
 	fflush(fp);
+
+	// not enough information
+	if (argc < 3) {
+		fprintf(stderr, "usage %s hostname port\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
 
     printf("test: first\n");
     // Create address we're going to listen on (with given port number)
 	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_INET6;       // IPv4
-	hints.ai_socktype = SOCK_STREAM; // TCP
-	hints.ai_flags = AI_PASSIVE;     // for bind, listen, accept
-	// node (NULL means any interface), service (port), hints, res
+	hints.ai_family = AF_INET6;      
+	hints.ai_socktype = SOCK_STREAM; 
+	hints.ai_flags = AI_PASSIVE;     
 	getaddrinfo(NULL, PORT, &hints, &res);
 
     printf("test: before sockfd\n");
@@ -60,15 +62,14 @@ int main(int argc, char* argv[]) {
 
     printf("test: before listen\n");
 	// Listen on socket - means we're ready to accept connections,
-	// incoming connection requests will be queued, man 3 listen
+	// incoming connection requests will be queued
 	if (listen(sockfd, 5) < 0) {
 		perror("listen");
 		exit(EXIT_FAILURE);
 	}
+	// in a while loop, so will not terminate itself
 	while(1){
-		// printf("test: before accept\n");
-		// Accept a connection - blocks until a connection is ready to be accepted
-		// Get back a new file descriptor to communicate on
+		// accept a connection
 		client_addr_size = sizeof client_addr;
 		newsockfd =
 			accept(sockfd, (struct sockaddr*)&client_addr, &client_addr_size);
@@ -82,8 +83,7 @@ int main(int argc, char* argv[]) {
 		memset(length, 0, 256);
 		printf("test: before read\n");
 
-
-	// while(1){
+// #########################################
 		// here the input come
 		// read the size of the input
 		int read_length_bytes = 0;
@@ -110,12 +110,6 @@ int main(int argc, char* argv[]) {
 			n = read(newsockfd, temp_length_read, 2);
 		}
 		
-		// if (n == 0) {
-		// 	continue;
-		// }
-		// else if(n < 0) {
-		// 	break;
-		// }
 		size = (((int)length[0])*16*16) + (int)length[1];
 		printf("size = %d\n",size);
 
@@ -155,8 +149,10 @@ int main(int argc, char* argv[]) {
 			perror("ERROR reading from socket in the read length");
 			exit(EXIT_FAILURE);
 		}
-		
-		// connect length and buffer_temp array to become a single buffer array
+// #########################################		
+
+
+		// connect length array and buffer_temp array to become a single buffer array
 		for (int i=0; i< 2; i++){
 			buffer[i] = length[i];
 		}
@@ -176,9 +172,14 @@ int main(int argc, char* argv[]) {
 		}
 		printf("\n");
 		
-		int n3,isValid = 1;
+		// call the read_input function(in the function, it will produce the dns_svr.log)
+		// and check for rcode = 4 
+		int n3, isValid = 1;
 		printf("before read input client\n");
 		isValid = read_input(buffer_temp, size);
+
+		// if the input is not valid
+		// i.e. not implemented
 		if(isValid != 1){ 
 			printf("not valid req\n");
 			printf("buffer[5] before = %x\n",buffer[5]);
@@ -201,19 +202,12 @@ int main(int argc, char* argv[]) {
 
 
 
-
-		//connect upStream
+		// the code in below try to connect to a up stream server
 		printf("connect to upstream");
 		printf("test: first up \n");
 		int sockfd2, n2;
 		struct addrinfo hints2, *servinfo2, *rp2;
 		unsigned char length2[2];
-		// unsigned char buffer2[256];
-
-		if (argc < 3) {
-			fprintf(stderr, "usage %s hostname port\n", argv[0]);
-			exit(EXIT_FAILURE);
-		}
 
 		// Create address
 		memset(&hints2, 0, sizeof hints2);
@@ -221,26 +215,20 @@ int main(int argc, char* argv[]) {
 		hints2.ai_socktype = SOCK_STREAM;
 
 		printf("test: before getaddrinfo up \n");
-		// Get addrinfo of server. From man page:
-		// The getaddrinfo() function combines the functionality provided by the
-		// gethostbyname(3) and getservbyname(3) functions into a single interface
 		if ((getaddrinfo(argv[1], argv[2], &hints2, &servinfo2)) < 0) {
 			printf("error in getaddrinfo 2\n");
 			perror("getaddrinfo2");
 			exit(EXIT_FAILURE);
 		}
 		printf("test: before sockfd up\n");
-		// Connect to first valid result
-		// Why are there multiple results? see man page (search 'several reasons')
-		// How to search? enter /, then text to search for, press n/N to navigate
+		
+		// create sockets
 		for (rp2 = servinfo2; rp2 != NULL; rp2 = rp2->ai_next) {
 			sockfd2 = socket(rp2->ai_family, rp2->ai_socktype, rp2->ai_protocol);
 			if (sockfd2 == -1)
 				continue;
-
 			if (connect(sockfd2, rp2->ai_addr, rp2->ai_addrlen) != -1)
-				break; // success
-
+				break; 
 			close(sockfd2);
 		}
 		if (rp2 == NULL) {
@@ -248,6 +236,7 @@ int main(int argc, char* argv[]) {
 			exit(EXIT_FAILURE);
 		}
 
+		// write query to the up stream server
 		printf("test: before write to upstream \n");
 		n2 = write(sockfd2, buffer, size+2);
 		if (n2 < 0) {
@@ -255,7 +244,8 @@ int main(int argc, char* argv[]) {
 			exit(EXIT_FAILURE);
 		}
 
-
+		// #########################################
+		// read res from the upstream server
 		int read_length_bytes2 = 0;
 		unsigned char temp_length_read2[2];
 		memset(temp_length_read2,0,2);
@@ -277,8 +267,6 @@ int main(int argc, char* argv[]) {
 			}
 			n2 = read(sockfd2, temp_length_read2, 2);
 		}
-
-
 		if (n2 < 0) {
 			printf("error in read lenght 2\n");
 			perror("read length 2");
@@ -289,16 +277,12 @@ int main(int argc, char* argv[]) {
 		int size2 = 0;
 		size2 = (((int)length2[0])*16*16) + (int)length2[1];
 		printf("size2 from server = %d\n",size2);
-
 		unsigned char buffer2[size2 + 2];
 		unsigned char buffer2_temp[size2];
-
 		memset(buffer2, 0, size2 + 2);
 		memset(buffer2_temp, 0, size2);
 
 		printf("test: before reading from upstream \n");
-
-		
 		int read_bytes2 = 0;
 		unsigned char temp_read2[size2];
 
@@ -321,18 +305,18 @@ int main(int argc, char* argv[]) {
 			n2 = read(sockfd2, temp_read2, size2);
 		}
 		// n2 = read(sockfd2, buffer2_temp, size2);
-
-
-
 		if (n2 < 0) {
 			perror("read2");
 			exit(EXIT_FAILURE);
 		}
 
+// #########################################
+
+		// call the read_input function in the helper1.c file
+		// it will read the inforamtion of the input from up stream server
 		printf("before read input upstream\n");
 		read_input(buffer2_temp, size2);
 		printf("after read input upstream\n");
-
 
 		// combined length array and buffer_temp2 array into a single array
 		// and send back to our client
@@ -342,7 +326,6 @@ int main(int argc, char* argv[]) {
 		for (int i = 0; i< size2; i++){
 			buffer2[i+2] = buffer2_temp[i];
 		}
-
 		printf("Buffer2 from up stream: \n");
 		for (int i = 0; i< size2+2; i++){
 			if(i % 16 == 0){
@@ -352,16 +335,15 @@ int main(int argc, char* argv[]) {
 		}
 		printf("\n");
 
-
 		//close sockets used to connect to upstream
 		close(sockfd2);
 		freeaddrinfo(servinfo2);
 
+
 		// write back to the client
 		n2 = write(newsockfd, buffer2 , size2+2);
-
-
 	}
+	
 	// close sockets from client
 	freeaddrinfo(res);
 	close(newsockfd);

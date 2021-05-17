@@ -6,7 +6,9 @@
 #include <time.h>
 #include <string.h>
 
-
+// this function will read the input from the client/upstream server
+// and return 1 if the input is valid
+// while other int if the input is invalid(i.e. not implemented)
 int read_input(unsigned char* buffer, int size){
     printf("read_input very first\n");
     FILE *fp;
@@ -19,27 +21,20 @@ int read_input(unsigned char* buffer, int size){
     int ans_name[2], TTL[4], header_id[2];
     // int rcode[4];
 
-
+    // for time
     struct tm *info;
     time_t raw_time;
     char time_buffer[256];
 
     printf("first read_input\n");
-    // printf("buffer array in read_input function\bn");
-    // for (int i = 0; i< size; i++){
-    //     if(i % 16 == 0){
-    //         printf("\n");
-    //     }
-    //     printf("%x  ", buffer[i]);
-    // }
-    // printf("\n");
+
+    // memset variables and arrays
     memset(time_buffer, 0, 256);
     memset(header_id,0,2*sizeof(int));
     memset(ans_name,0,2*sizeof(int));
     memset(TTL,0,4*sizeof(int));
     memset(domain_name,0,256);
     memset(ipv6_s,0,256);
-    // while(1){
 
     printf("read_input: before read hearder\n");
     // header read start here
@@ -89,7 +84,6 @@ int read_input(unsigned char* buffer, int size){
         else if (count == 11){
             arcount += (int)buffer[count];
         }
-        // printf("buffer = %x\n",buffer[0]);
     }
 
     printf("id: %x %x, QR= %d, aa= %d, ra= %d, z= %d, ad= %d, cd= %d, qcount= %d, ancount= %d, nscount= %d, arcount =%d\n",
@@ -97,20 +91,18 @@ int read_input(unsigned char* buffer, int size){
 
 
     
-
     buffer_temp = HEADER_SIZE;
-    // printf("buffer[buffer_temp] = %d\n",buffer[buffer_temp]);
     printf("read_input: before read question\n");
+
+
     // question read start here
     int label_size = 0;
     int qname_size = 0;
     for (int count = 0; count < size-HEADER_SIZE; count ++){
-        // n = read(0, buffer, 1);
         qname_size++;
         if (buffer[buffer_temp] == 0){
             break;
         }
-        
         if (label_size == 0){
             label_size = (int)buffer[buffer_temp++];
             if (count == 0){
@@ -122,41 +114,42 @@ int read_input(unsigned char* buffer, int size){
                 continue;
             }
         }
-
         domain_name[domain_name_size++] = (char)buffer[buffer_temp++];
-    
-        // domain_name_size++;
+
         label_size-- ;
     }
-    
     buffer_temp++;
     printf("domain_name_size = %d\n",domain_name_size);
     printf("domain_name: %s\n",domain_name);
-    // printf("buffer[buffer_temp-1] = %x\n",buffer[buffer_temp-1]);
-    // printf("buffer[buffer_temp] = %x\n",buffer[buffer_temp]);
-    // printf("buffer[buffer_temp+1] = %x\n",buffer[buffer_temp+1]);
+    // qtype
     qtype = (((int)buffer[buffer_temp])*16*16) + (int)buffer[buffer_temp+1];
     buffer_temp+=2;
+    // qclass
     qclass = (((int)buffer[buffer_temp])*16*16) + (int)buffer[buffer_temp+1];
     buffer_temp+=2;
     printf("qtype = %d, qclass = %d\n",qtype,qclass);
 
     printf("read_input: before put into log question part\n");
+    // if the input is question
     if (qr == 0){
         printf("qr == 0\n");
         memset(time_buffer,0,256);
+        // time
         time(&raw_time); 
         info = localtime( &raw_time );
+        // put time into the dns_svr.log
         strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
         printf("time_buffer = %s\n",time_buffer);
         fprintf(fp, "%s requested %s\n",time_buffer, domain_name);
         fflush(fp);
     }
+    // when the request is not AAAA(IPV6)
     if (qtype != 28){
+        // time
         memset(time_buffer,0,256);
         info = localtime( &raw_time );
         strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
-        // printf("time_buffer = %s\n",time_buffer);
+        // put time into the dns_svr.log
         fprintf(fp, "%s unimplemented request\n",time_buffer);
         int code;
         code = ((int)buffer[3]) + 4;
@@ -165,7 +158,7 @@ int read_input(unsigned char* buffer, int size){
     }
 
     printf("read_input: before read answer\n");
-    // answer read start here
+    // answer part read start here
     if (ancount > 0){
         ans_name[0] = buffer[buffer_temp++];
         ans_name[1] = buffer[buffer_temp++];
@@ -180,7 +173,7 @@ int read_input(unsigned char* buffer, int size){
         rdlength = (((int)buffer[buffer_temp])*16*16) + (int)buffer[buffer_temp+1];
         buffer_temp+=2;
 
-
+        // ipv6 read start here(rdata in answer part in dns)
         int rdata[rdlength];
         memset(rdata, 0, rdlength);
         int zero_time = 0;
@@ -225,13 +218,10 @@ int read_input(unsigned char* buffer, int size){
         printf("ans_name = %x %x\n", ans_name[0],ans_name[1]);
         printf("atype = %d, aclass = %d\n",atype,aclass);
         printf("TTL = %x %x %x %x\n", TTL[0],TTL[1],TTL[2],TTL[3]);
-        // for (int i = 0; i< rdlength; i++){
-        //     printf("RDATA[%d] = %x\n", rdlength,rdata[i]);
-        // }
-
         printf("ipv6_s = %s\n", ipv6_s);
-        
         printf("read_input: before put log answer part\n");
+
+        // when the input is answer and type is AAAA(IPV6)
         if (atype == 28 && qr==1){
             memset(time_buffer,0,256);
             time(&raw_time);
@@ -240,28 +230,8 @@ int read_input(unsigned char* buffer, int size){
             // printf("time_buffer = %s\n",time_buffer);
             fprintf(fp, "%s %s is at %s\n",time_buffer, domain_name,ipv6_s);
             fflush(fp);
-        }
-        // else if(atype != 28){
-        //     memset(time_buffer,0,256);
-        //     time(&raw_time);
-        //     info = localtime( &raw_time );
-        //     strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
-        //     // printf("time_buffer = %s\n",time_buffer);
-        //     fprintf(fp, "%s unimplemented request\n",time_buffer);
-        //     fflush(fp);
-        // }
+        }      
     }
-
-    // unsigned char pass_up_stream[size+2];
-    // for (int i = 0; i< 2; i++){
-    //     pass_up_stream[i] = length[i];
-    // }
-    // for (int i = 0;i < size; i++){
-    //     pass_up_stream[i+2] = buffer[i];
-    // }   
-
-
-
 
     return 1;
 }
