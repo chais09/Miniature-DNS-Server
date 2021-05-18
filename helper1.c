@@ -151,8 +151,10 @@ int read_input(unsigned char* buffer, int size){
         strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
         // put time into the dns_svr.log
         fprintf(fp, "%s unimplemented request\n",time_buffer);
+        
+        // return the q params with rcode = 4
         int code;
-        code = ((int)buffer[3]) + 4;
+        code = (ra*128 + z*64 + ad*32 + cd*16 + 4); 
         fflush(fp);
         return code;
     }

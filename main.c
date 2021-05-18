@@ -83,6 +83,8 @@ int main(int argc, char* argv[]) {
 		memset(length, 0, 256);
 		printf("test: before read\n");
 
+
+		
 // #########################################
 		// here the input come
 		// read the size of the input
@@ -343,7 +345,7 @@ int main(int argc, char* argv[]) {
 		// write back to the client
 		n2 = write(newsockfd, buffer2 , size2+2);
 	}
-	
+
 	// close sockets from client
 	freeaddrinfo(res);
 	close(newsockfd);
