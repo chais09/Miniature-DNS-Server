@@ -10,23 +10,19 @@
 // and return 1 if the input is valid
 // while other int if the input is invalid(i.e. not implemented)
 int read_input(unsigned char* buffer, int size){
-    printf("read_input very first\n");
     FILE *fp;
     fp  = fopen ("dns_svr.log", "a");
     char domain_name[256], ipv6_s[256];
     int domain_name_size = 0;
-    int qr = 0, aa = 0, ra = 0, z = 0, ad = 0, cd = 0, qdcount = 0;
-    int qtype = 0, qclass = 0, atype = 0, aclass = 0, rdlength = 0;
-    int buffer_temp = 0, ancount = 0, nscount = 0, arcount = 0;
+    int qr = 0, ra = 0, z = 0, ad = 0, cd = 0, qdcount = 0, qtype = 0,  atype = 0;
+    int  rdlength = 0, buffer_temp = 0, ancount = 0, nscount = 0, arcount = 0;
     int ans_name[2], TTL[4], header_id[2];
-    // int rcode[4];
+    int qclass = 0, aclass = 0, aa = 0;
 
     // for time
     struct tm *info;
     time_t raw_time;
     char time_buffer[256];
-
-    printf("first read_input\n");
 
     // memset variables and arrays
     memset(time_buffer, 0, 256);
@@ -36,7 +32,8 @@ int read_input(unsigned char* buffer, int size){
     memset(domain_name,0,256);
     memset(ipv6_s,0,256);
 
-    printf("read_input: before read hearder\n");
+
+    /////////////////////////////////// HEADER READ ////////////////////////////////////
     // header read start here
     for (int count = 0; count < HEADER_SIZE; count++){
         if (count == 0){
@@ -55,10 +52,6 @@ int read_input(unsigned char* buffer, int size){
             z = (buffer[count]>>6 & 1);
             ad = (buffer[count]>>5 & 1);
             cd = (buffer[count]>>4 & 1);
-            // rcode[0] = (buffer[count]>>3 & 1);
-            // rcode[1] = (buffer[count]>>2 & 1);
-            // rcode[2] = (buffer[count]>>1 & 1);
-            // rcode[3] = (buffer[count]>>0 & 1);
         }
         else if (count == 4){
             qdcount += ((int)buffer[count])*16*16;
@@ -88,13 +81,10 @@ int read_input(unsigned char* buffer, int size){
 
     printf("id: %x %x, QR= %d, aa= %d, ra= %d, z= %d, ad= %d, cd= %d, qcount= %d, ancount= %d, nscount= %d, arcount =%d\n",
     header_id[0], header_id[1], qr, aa, ra,z,ad,cd,qdcount,ancount,nscount,arcount);
-
-
     
+
     buffer_temp = HEADER_SIZE;
-    printf("read_input: before read question\n");
-
-
+    ////////////////////////////////// QUESTION READ//////////////////////////////////////
     // question read start here
     int label_size = 0;
     int qname_size = 0;
@@ -110,7 +100,6 @@ int read_input(unsigned char* buffer, int size){
             }
             else{
                 domain_name[domain_name_size++] = '.';
-                printf("here\n");
                 continue;
             }
         }
@@ -119,30 +108,28 @@ int read_input(unsigned char* buffer, int size){
         label_size-- ;
     }
     buffer_temp++;
-    printf("domain_name_size = %d\n",domain_name_size);
-    printf("domain_name: %s\n",domain_name);
+
     // qtype
     qtype = (((int)buffer[buffer_temp])*16*16) + (int)buffer[buffer_temp+1];
-    buffer_temp+=2;
+    buffer_temp += 2;
+
     // qclass
     qclass = (((int)buffer[buffer_temp])*16*16) + (int)buffer[buffer_temp+1];
-    buffer_temp+=2;
+    buffer_temp += 2;
     printf("qtype = %d, qclass = %d\n",qtype,qclass);
 
-    printf("read_input: before put into log question part\n");
     // if the input is question
     if (qr == 0){
-        printf("qr == 0\n");
         memset(time_buffer,0,256);
         // time
         time(&raw_time); 
         info = localtime( &raw_time );
         // put time into the dns_svr.log
         strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
-        printf("time_buffer = %s\n",time_buffer);
         fprintf(fp, "%s requested %s\n",time_buffer, domain_name);
         fflush(fp);
     }
+
     // when the request is not AAAA(IPV6)
     if (qtype != 28){
         // time
@@ -151,7 +138,6 @@ int read_input(unsigned char* buffer, int size){
         strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
         // put time into the dns_svr.log
         fprintf(fp, "%s unimplemented request\n",time_buffer);
-        
         // return the q params with rcode = 4
         int code;
         code = (ra*128 + z*64 + ad*32 + cd*16 + 4); 
@@ -159,7 +145,7 @@ int read_input(unsigned char* buffer, int size){
         return code;
     }
 
-    printf("read_input: before read answer\n");
+    ///////////////////////////////// ANSWER READ /////////////////////////////////////
     // answer part read start here
     if (ancount > 0){
         ans_name[0] = buffer[buffer_temp++];
@@ -179,8 +165,8 @@ int read_input(unsigned char* buffer, int size){
         int rdata[rdlength];
         memset(rdata, 0, rdlength);
         int zero_time = 0;
+
         // make the ipv6 string and also save in rdata
-        printf("read_input: before ipv6\n");
         for (int i = 0; i< rdlength; i++){
             char temp[256];
             memset(temp,0,256);
@@ -216,12 +202,11 @@ int read_input(unsigned char* buffer, int size){
             rdata[i] = buffer[buffer_temp];
             buffer_temp++;
         }
-
-        printf("ans_name = %x %x\n", ans_name[0],ans_name[1]);
+        // printf("ans_name = %x %x\n", ans_name[0],ans_name[1]);
         printf("atype = %d, aclass = %d\n",atype,aclass);
-        printf("TTL = %x %x %x %x\n", TTL[0],TTL[1],TTL[2],TTL[3]);
-        printf("ipv6_s = %s\n", ipv6_s);
-        printf("read_input: before put log answer part\n");
+        // printf("TTL = %x %x %x %x\n", TTL[0],TTL[1],TTL[2],TTL[3]);
+        // printf("ipv6_s = %s\n", ipv6_s);
+        // printf("read_input: before put log answer part\n");
 
         // when the input is answer and type is AAAA(IPV6)
         if (atype == 28 && qr==1){
@@ -229,7 +214,6 @@ int read_input(unsigned char* buffer, int size){
             time(&raw_time);
             info = localtime( &raw_time );
             strftime(time_buffer, sizeof(time_buffer), "%FT%T%z", info);
-            // printf("time_buffer = %s\n",time_buffer);
             fprintf(fp, "%s %s is at %s\n",time_buffer, domain_name,ipv6_s);
             fflush(fp);
         }      
