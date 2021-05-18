@@ -5,7 +5,7 @@
 # BIN - binary
 CC=gcc
 OBJ=helper1.o
-COPT=-Wall -Wpedantic -g
+COPT=-Wall -Wpedantic -g -lm
 # BIN_PHASE1=phase1
 BIN_PHASE2=dns_svr
 

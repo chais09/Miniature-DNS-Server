@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 
 
 #define PORT "8053"
@@ -80,77 +81,80 @@ int main(int argc, char* argv[]) {
 			perror("accept");
 			exit(EXIT_FAILURE);
 		}
-		memset(length, 0, 256);
+		// memset(length, 0, 256);
 		printf("test: before read\n");
 
+///////////////////////////////////////////////////////
 
+		int size = 0;
+		unsigned char* buffer_data;
+		while(1){
+			printf("while loop\n");
+			fflush(stdout);
+			int size_temp = 0;
+			memset(length, 0, 2);
+			n = read(newsockfd, length, 2);
+			if (n == 0){
+				break;
+			}
+			else if (n < 0){
+				perror("read lenght fail: client");
+				exit(EXIT_FAILURE);
+			}
+			// printf("n = %d\n",n);
+			size_temp = (((int)length[0])*16*16) + (int)length[1];
+
+			if(size == 0){
+				buffer_data = malloc(size_temp * sizeof(unsigned char));
+				memset(buffer_data, 0, size_temp);
+			}
+			else{
+				buffer_data = realloc(buffer_data, (size + size_temp)*sizeof(unsigned char));
+				memset(buffer_data + size, 0 , size_temp);
+			}
+
+			n = read(newsockfd, buffer_data + size, size_temp);
+			if (n < 0){
+				perror("read data fail: client");
+				exit(EXIT_FAILURE);
+			}
+			size += size_temp;
+
+		}
+		unsigned char buffer[size + 2];
+		memset(buffer, 0, size+2);
+
+		memset(length, 0, 2); 
+		length[0] = (int)floor(size/(16*16));
+		length[1] = size%(16*16);
+
+		printf("after read data from client");
+		fflush(stdout);
+
+//////////////////////////////////////////////////////
 		
 // #########################################
 		// here the input come
 		// read the size of the input
-		// int read_length_bytes = 0;
-		// unsigned char temp_length_read[2];
-		memset(length, 0, 256);
-		// memset(temp_length_read,0,2);
-		int size = 0;
-		n = read(newsockfd, length, 2);
-		 // n is number of characters read
-		// if(n == 2){
-		// 	for(int i = 0; i < 2; i++){
-		// 		length[i] = temp_length_read[i];
-		// 	}
-		// }
-		// while (n + read_length_bytes < 2){
-		// 	for (int i = 0; i< n; i++){
-		// 		length[read_length_bytes] = temp_length_read[i];
-		// 		read_length_bytes++;
-		// 	}
-		// 	memset(temp_length_read,0,2);
-		// 	if (read_length_bytes >= 2){
-		// 		break;
-		// 	}
-		// n = read(newsockfd, temp_length_read, 2);
-		// }
+		// memset(length, 0, 256);
+		// int size = 0;
+		// n = read(newsockfd, length, 2);
+		// size = (((int)length[0])*16*16) + (int)length[1];
+		// printf("size = %d\n",size);
+
+		// unsigned char buffer_temp[size];
+		// memset(buffer_temp,0,size);
 		
-		size = (((int)length[0])*16*16) + (int)length[1];
-		printf("size = %d\n",size);
-
-		unsigned char buffer_temp[size];
-		memset(buffer_temp,0,size);
+		// unsigned char buffer[size + 2];
+		// memset(buffer,0,size+2); 
 		
-		unsigned char buffer[size + 2];
-		memset(buffer,0,size+2); 
-		
-		// unsigned char buffer[256];
-		// memset(buffer,0,256);
-		// int read_bytes = 0;
-		// unsigned char temp_read[size];
+		// n = read(newsockfd, buffer_temp, size); // n is number of characters read
 
-		// memset(temp_read,0,size);
-		n = read(newsockfd, buffer_temp, size); // n is number of characters read
-
-		// if(n == size){
-		// 	for(int i = 0; i < size; i++){
-		// 		buffer_temp[i] = temp_read[i];
-		// 	}
+		// if (n < 0) {
+		// 	printf("error in read socket client, read length\n");
+		// 	perror("ERROR reading from socket in the read length");
+		// 	exit(EXIT_FAILURE);
 		// }
-		// while (n + read_bytes < size){
-		// 	for (int i = 0; i< n; i++){
-		// 		buffer_temp[read_bytes] = temp_read[i];
-		// 		read_bytes++;
-		// 	}
-		// 	memset(temp_read,0,size);
-		// 	if (read_bytes >= size){
-		// 		break;
-		// 	}
-		// 	n = read(newsockfd, temp_read, size);
-		// }
-
-		if (n < 0) {
-			printf("error in read socket client, read length\n");
-			perror("ERROR reading from socket in the read length");
-			exit(EXIT_FAILURE);
-		}
 // #########################################		
 
 
@@ -159,31 +163,34 @@ int main(int argc, char* argv[]) {
 			buffer[i] = length[i];
 		}
 		for (int i = 0; i< size; i++){
-			buffer[i+2] = buffer_temp[i];
+			buffer[i+2] = buffer_data[i];
 		}
-		if (n < 0) {
-			perror("ERROR reading from socket");
-			exit(EXIT_FAILURE);
-		}
+
 		printf("buffer from client: \n");
+		fflush(stdout);
 		for (int i = 0; i< size+2; i++){
 			if(i % 16 == 0){
 				printf("\n");
+				fflush(stdout);
 			}
 			printf("%x  ", buffer[i]);
+			fflush(stdout);
 		}
 		printf("\n");
+		fflush(stdout);
 		
 		// call the read_input function(in the function, it will produce the dns_svr.log)
 		// and check for rcode = 4 
 		int n3, isValid = 1;
 		printf("before read input client\n");
-		isValid = read_input(buffer_temp, size);
+		fflush(stdout);
+		isValid = read_input(buffer_data, size);
 
 		// if the input is not valid
 		// i.e. not implemented
 		if(isValid != 1){ 
 			printf("not valid req\n");
+			fflush(stdout);
 			printf("buffer[5] before = %x\n",buffer[5]);
 			printf("buffer[4] before = %x\n",buffer[4]);
 			buffer[5] = (int) isValid;
@@ -199,6 +206,7 @@ int main(int argc, char* argv[]) {
 			continue;
 		}
 		printf("after read input client\n");
+		fflush(stdout);
 
 
 
@@ -206,6 +214,7 @@ int main(int argc, char* argv[]) {
 
 		// the code in below try to connect to a up stream server
 		printf("connect to upstream");
+		fflush(stdout);
 		printf("test: first up \n");
 		int sockfd2, n2;
 		struct addrinfo hints2, *servinfo2, *rp2;
@@ -247,28 +256,8 @@ int main(int argc, char* argv[]) {
 		}
 
 		// #########################################
-		// read res from the upstream server
-		// int read_length_bytes2 = 0;
-		// unsigned char temp_length_read2[2];
-		// memset(temp_length_read2,0,2);
 		memset(length2, 0,2);
 		n2 = read(sockfd2, length2, 2);
-		// if(n2 == 2){
-		// 	for(int i = 0; i < 2; i++){
-		// 		length2[i] = temp_length_read2[i];
-		// 	}
-		// }
-		// while (n2 + read_length_bytes2 < 2){
-		// 	for (int i = 0; i< n2; i++){
-		// 		length2[read_length_bytes2] = temp_length_read2[i];
-		// 		read_length_bytes2++;
-		// 	}
-		// 	memset(temp_length_read2,0,2);
-		// 	if (read_length_bytes2 >= 2){
-		// 		break;
-		// 	}
-		// 	n2 = read(sockfd2, temp_length_read2, 2);
-		// }
 		if (n2 < 0) {
 			printf("error in read lenght 2\n");
 			perror("read length 2");
@@ -285,28 +274,7 @@ int main(int argc, char* argv[]) {
 		memset(buffer2_temp, 0, size2);
 
 		printf("test: before reading from upstream \n");
-		// int read_bytes2 = 0;
-		// unsigned char temp_read2[size2];
-
-		// memset(temp_read2,0,size2);
 		n2= read(sockfd2, buffer2_temp, size2);
-		// if(n2 == size2){
-		// 	for(int i = 0; i < size2; i++){
-		// 		buffer2_temp[i] = temp_read2[i];
-		// 	}
-		// }
-		// while (n2 + read_bytes2 < size2){
-		// 	for (int i = 0; i< n2; i++){
-		// 		buffer2_temp[read_bytes2] = temp_read2[i];
-		// 		read_bytes2++;
-		// 	}
-		// 	memset(temp_read2,0,size2);
-		// 	if (read_bytes2 >= size2){
-		// 		break;
-		// 	}
-		// 	n2 = read(sockfd2, temp_read2, size2);
-		// }
-		// n2 = read(sockfd2, buffer2_temp, size2);
 		if (n2 < 0) {
 			perror("read2");
 			exit(EXIT_FAILURE);
