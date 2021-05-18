@@ -13,8 +13,7 @@
 
 
 int main(int argc, char* argv[]) {
-    int sockfd, newsockfd, n;
-	unsigned char length[2];
+    int sockfd, n;
 	struct addrinfo hints, *res;
 	struct sockaddr_storage client_addr;
 	socklen_t client_addr_size;
@@ -71,10 +70,15 @@ int main(int argc, char* argv[]) {
 	// in a while loop, so will not terminate itself
 	while(1){
 		// accept a connection
+		int newsockfd;
+		printf("first while loop\n");
 		client_addr_size = sizeof client_addr;
+		printf("first while before accept\n");
 		newsockfd =
 			accept(sockfd, (struct sockaddr*)&client_addr, &client_addr_size);
+		printf("newsockfs acept = %d\n", newsockfd);
 		if (newsockfd == 0){
+			printf("newsockfd = 0\n");
 			continue;
 		}
 		if (newsockfd < 0) {
@@ -85,76 +89,93 @@ int main(int argc, char* argv[]) {
 		printf("test: before read\n");
 
 ///////////////////////////////////////////////////////
+		// int size = 0;
+		// unsigned char *buffer_data;
+		// // while(3){
+		// 	printf("while loop\n");
+		// 	fflush(stdout);
+		// 	int size_temp = 0;
+		// 	unsigned char length_temp[2];
+		// 	memset(length_temp, 0, 2);
+		// 	printf("newsockfd before read length = %d\n",newsockfd);
+		// 	n = read(newsockfd, length_temp, 2);
+		// 	printf("newsockfd after read length = %d\n",newsockfd);
+		// 	printf("n after read = %d\n",n);
+		// 	if (n == 0){
+		// 		break;
+		// 	}
+		// 	else if (n < 0){
+		// 		perror("read lenght fail: client");
+		// 		exit(EXIT_FAILURE);
+		// 	}
+		// 	// printf("n = %d\n",n);
+		// 	size_temp = (((int)length_temp[0])*16*16) + (int)length_temp[1];
+		// 	printf("size_temp = %d\n",size_temp);
 
-		int size = 0;
-		unsigned char* buffer_data;
-		while(1){
-			printf("while loop\n");
-			fflush(stdout);
-			int size_temp = 0;
-			memset(length, 0, 2);
-			n = read(newsockfd, length, 2);
-			if (n == 0){
-				break;
-			}
-			else if (n < 0){
-				perror("read lenght fail: client");
-				exit(EXIT_FAILURE);
-			}
-			// printf("n = %d\n",n);
-			size_temp = (((int)length[0])*16*16) + (int)length[1];
+		// 	if(size == 0){
+		// 		buffer_data = malloc(size_temp * sizeof(unsigned char));
+		// 		memset(buffer_data, 0, size_temp);
+		// 	}
+		// 	else{
+		// 		buffer_data = realloc(buffer_data, (size + size_temp)*sizeof(unsigned char));
+		// 		memset(buffer_data + size, 0 , size_temp);
+		// 	}
+		// 	printf("newsockfd before read data = %d\n",newsockfd);
+		// 	n = read(newsockfd, buffer_data + size, size_temp);
+		// 	printf("newsockfd after read data = %d\n",newsockfd);
+		// 	if (n < 0){
+		// 		perror("read data fail: client");
+		// 		exit(EXIT_FAILURE);
+		// 	}
+		// 	size += size_temp;
+		// // }
+		// printf("newsockfd after while loop = %d\n",newsockfd);
+		// printf("client input size = %d\n",size);
+		// unsigned char buffer[size + 2];
+		// memset(buffer, 0, size+2);
+		// unsigned char length[2];
+		// memset(length, 0, 2); 
+		// length[0] = (unsigned char)floor(size/(16*16));
+		// length[1] = (unsigned char)size%(16*16);
 
-			if(size == 0){
-				buffer_data = malloc(size_temp * sizeof(unsigned char));
-				memset(buffer_data, 0, size_temp);
-			}
-			else{
-				buffer_data = realloc(buffer_data, (size + size_temp)*sizeof(unsigned char));
-				memset(buffer_data + size, 0 , size_temp);
-			}
-
-			n = read(newsockfd, buffer_data + size, size_temp);
-			if (n < 0){
-				perror("read data fail: client");
-				exit(EXIT_FAILURE);
-			}
-			size += size_temp;
-
-		}
-		unsigned char buffer[size + 2];
-		memset(buffer, 0, size+2);
-
-		memset(length, 0, 2); 
-		length[0] = (int)floor(size/(16*16));
-		length[1] = size%(16*16);
-
-		printf("after read data from client");
-		fflush(stdout);
+		// printf("after read data from client");
+		// fflush(stdout);
 
 //////////////////////////////////////////////////////
 		
 // #########################################
 		// here the input come
 		// read the size of the input
-		// memset(length, 0, 256);
-		// int size = 0;
-		// n = read(newsockfd, length, 2);
-		// size = (((int)length[0])*16*16) + (int)length[1];
-		// printf("size = %d\n",size);
+		unsigned char length[2];
+		memset(length, 0, 256);
+		int size = 0;
+		printf("newsockfd bedore read length = %d\n", newsockfd);
+		n = read(newsockfd, length, 2);
+		size = (((int)length[0])*16*16) + (int)length[1];
+		printf("size = %d\n",size);
 
-		// unsigned char buffer_temp[size];
-		// memset(buffer_temp,0,size);
+		unsigned char buffer_data[size];
+		memset(buffer_data,0,size);
 		
-		// unsigned char buffer[size + 2];
-		// memset(buffer,0,size+2); 
-		
-		// n = read(newsockfd, buffer_temp, size); // n is number of characters read
+		unsigned char buffer[size + 2];
+		memset(buffer,0,size+2); 
+		printf("newsockfd before read data = %d\n",newsockfd);
+		int temp_read_bytes = 0;
+		n = read(newsockfd, buffer_data, size); // n is number of characters read
+		if (n < size){
+			temp_read_bytes = n;
+			while(temp_read_bytes < size){
+				n = read(newsockfd, buffer_data + n, size);
+				temp_read_bytes += n;
+			}
+		}
+		printf("newsockfd in old = %d\n",newsockfd);
 
-		// if (n < 0) {
-		// 	printf("error in read socket client, read length\n");
-		// 	perror("ERROR reading from socket in the read length");
-		// 	exit(EXIT_FAILURE);
-		// }
+		if (n < 0) {
+			printf("error in read socket client, read length\n");
+			perror("ERROR reading from socket in the read length");
+			exit(EXIT_FAILURE);
+		}
 // #########################################		
 
 
@@ -210,6 +231,7 @@ int main(int argc, char* argv[]) {
 
 
 
+		printf("newsockfd before quetry up stream = %d\n",newsockfd);
 
 
 		// the code in below try to connect to a up stream server
@@ -306,17 +328,23 @@ int main(int argc, char* argv[]) {
 		printf("\n");
 
 		//close sockets used to connect to upstream
-		close(sockfd2);
-		freeaddrinfo(servinfo2);
 
 
 		// write back to the client
+		printf("newsockfd before write to client = %d\n", newsockfd);
 		n2 = write(newsockfd, buffer2 , size2+2);
+		printf("write back to client n2 = %d\n", n2);
+		printf("newsockfd after write back to client = %d\n",newsockfd);
+
+
+		close(sockfd2);
+		freeaddrinfo(servinfo2);
+		close(newsockfd);
 	}
 
 	// close sockets from client
 	freeaddrinfo(res);
-	close(newsockfd);
+	
 	close(sockfd);
 	
     return 0;
