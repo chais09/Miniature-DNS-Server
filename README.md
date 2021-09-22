@@ -1,0 +1,3 @@
+# Miniature-DNS-Server
+
+The Domain Name System (DNS) provides, among other things, the mapping between human-meaningful hostnames like lms.unimelb.edu.au and the numeric IP addresses that indicate where packets should be sent. DNS consists of a hierarchy of servers, each knowing a portion of the complete mapping. In this project, you will write a DNS server that accepts requests for IPv6 addresses and serves them either from its own cache or by querying servers higher up the hierarchy. Each transaction consists of atmost four messages: one from your client to you, one from you to your upstream server, one from your upstream server to you and one from you to your client. The middle two can be sometimes skipped if you cache some of the answers.
