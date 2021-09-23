@@ -1,0 +1,25 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "chais09",
+      "name": "chais09",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55682227?v=4",
+      "profile": "https://chais09.github.io",
+      "contributions": [
+        "projectManagement",
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "Miniature-DNS-Server",
+  "projectOwner": "chais09",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
